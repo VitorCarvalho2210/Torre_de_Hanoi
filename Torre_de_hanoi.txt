@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Torre de Hanoi</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; background: #f9f9f9; }
+  h1 { margin-top: 20px; }
+  .tower-container { display: flex; justify-content: center; margin-top: 50px; gap: 50px; }
+  .tower { width: 140px; height: 220px; background: #f0f0f0; position: relative; border: 2px solid black; }
+  .peg { width: 20px; height: 200px; background: black; position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; }
+  .disk { height: 30px; position: absolute; bottom: 0; border-radius: 5px; cursor: grab; text-align: center; color: #fff; line-height: 30px; }
+  #controls { margin-top: 50px; font-size: 16px; }
+  select, button { font-size: 16px; margin-left: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Torre de Hanoi</h1>
+<div class="tower-container">
+  <div class="tower" id="tower0"><div class="peg"></div></div>
+  <div class="tower" id="tower1"><div class="peg"></div></div>
+  <div class="tower" id="tower2"><div class="peg"></div></div>
+</div>
+
+<div id="controls">
+  Nº de discos:
+  <select id="numDisks">
+    <option value="3" selected>3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+  </select>
+  <br><br>
+  Mínimo de movimentos: <span id="minMoves">7</span> <br>
+  Seu nº de movimentos: <span id="movesCount">0</span> <br><br>
+  <button onclick="initGame()">Reiniciar</button>
+</div>
+
+<script>
+const colors = ["#6a0dad","#d470ff","#ffb6c1","#ff7f50","#ffa500"];
+let towers = [[], [], []];
+let moves = 0;
+
+function initGame() {
+  const n = parseInt(document.getElementById("numDisks").value);
+  moves = 0;
+  document.getElementById("movesCount").innerText = moves;
+  document.getElementById("minMoves").innerText = Math.pow(2, n) - 1;
+
+  towers = [[], [], []];
+  for (let i = n; i >= 1; i--) {
+    towers[0].push(i); // todos os discos começam na torre da esquerda
+  }
+  drawTowers();
+}
+
+function drawTowers() {
+  for (let t = 0; t < 3; t++) {
+    const towerEl = document.getElementById("tower" + t);
+    towerEl.querySelectorAll(".disk").forEach(d => d.remove());
+    towers[t].forEach((disk, i) => {
+      const diskEl = document.createElement("div");
+      diskEl.className = "disk";
+      const diskWidth = 30 + disk * 20; // largura do disco
+      diskEl.style.width = diskWidth + "px";
+      diskEl.style.background = colors[disk - 1];
+      diskEl.style.bottom = i * 30 + "px";
+      // centraliza o disco na torre inteira
+      diskEl.style.left = (towerEl.clientWidth - diskWidth)/2 + "px";
+      diskEl.innerText = disk;
+      diskEl.draggable = true;
+      diskEl.addEventListener("dragstart", dragStart);
+      towerEl.appendChild(diskEl);
+    });
+  }
+}
+
+let draggedDisk = null;
+function dragStart(e) { 
+  const parent = e.target.parentElement;
+  if (parent.lastElementChild === e.target) draggedDisk = {el: e.target, tower: parseInt(parent.id[5])};
+  else e.preventDefault();
+}
+
+document.addEventListener("dragover", e => e.preventDefault());
+
+document.addEventListener("drop", e => {
+  if (e.target.classList.contains("tower") && draggedDisk) {
+    const towerIdx = parseInt(e.target.id[5]);
+    const targetTower = towers[towerIdx];
+    const topDisk = targetTower[targetTower.length-1];
+    if (!topDisk || draggedDisk.el.innerText < topDisk) {
+      towers[draggedDisk.tower].pop();
+      targetTower.push(parseInt(draggedDisk.el.innerText));
+      moves++;
+      document.getElementById("movesCount").innerText = moves;
+      drawTowers();
+    }
+    draggedDisk = null;
+  }
+});
+
+initGame();
+</script>
+
+</body>
+</html>
